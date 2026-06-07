@@ -14,6 +14,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/src/prisma ./src/prisma
+RUN npx prisma generate
 RUN mkdir -p logs
 EXPOSE 5000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/app.js"]
+CMD ["sh", "-c", "npx prisma db push && node dist/app.js"]
