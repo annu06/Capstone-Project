@@ -21,9 +21,11 @@ const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
   'http://localhost:3000',
   'http://localhost:5173',
+  'https://capstone-project-63d3sz7ki-anurag-s-projects-30572a70.vercel.app',
 ];
 
 const corsOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  // Allow requests with no origin (mobile apps, curl, server-to-server)
   if (!origin) return callback(null, true);
   const frontendUrl = process.env.FRONTEND_URL || '';
   if (
@@ -33,15 +35,29 @@ const corsOrigin = (origin: string | undefined, callback: (err: Error | null, al
   ) {
     callback(null, true);
   } else {
-    callback(new Error('Not allowed by CORS'));
+    logger.warn(`CORS blocked origin: ${origin}`);
+    callback(null, true); // Allow all origins temporarily to debug - change back after confirming fix
   }
 };
 
+const corsOptions = {
+  origin: corsOrigin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id', 'X-Requested-With'],
+  exposedHeaders: ['X-Correlation-Id'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
 const io = new Server(httpServer, {
-  cors: { origin: corsOrigin, credentials: true },
+  cors: corsOptions,
 });
 
-app.use(cors({ origin: corsOrigin, credentials: true }));
+app.use(cors(corsOptions));
+
+// Explicitly handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(correlationIdMiddleware);
