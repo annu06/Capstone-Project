@@ -17,47 +17,27 @@ import { logger } from './utils/logger';
 const app = express();
 const httpServer = createServer(app);
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:3000',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://capstone-project-63d3sz7ki-anurag-s-projects-30572a70.vercel.app',
-];
-
-const corsOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-  // Allow requests with no origin (mobile apps, curl, server-to-server)
-  if (!origin) return callback(null, true);
-  const frontendUrl = process.env.FRONTEND_URL || '';
-  if (
-    allowedOrigins.includes(origin) ||
-    origin.endsWith('.vercel.app') ||
-    (frontendUrl && origin === frontendUrl)
-  ) {
-    callback(null, true);
-  } else {
-    logger.warn(`CORS blocked origin: ${origin}`);
-    callback(null, true); // Allow all origins temporarily to debug - change back after confirming fix
-  }
-};
-
-const corsOptions = {
-  origin: corsOrigin,
+// CORS: Allow all origins for now (can restrict later)
+const corsOptions: cors.CorsOptions = {
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['X-Correlation-Id'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
+  optionsSuccessStatus: 200,
 };
 
 const io = new Server(httpServer, {
-  cors: corsOptions,
+  cors: {
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  },
 });
 
-app.use(cors(corsOptions));
-
-// Explicitly handle preflight OPTIONS requests
+// Handle preflight OPTIONS for all routes FIRST
 app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(correlationIdMiddleware);
