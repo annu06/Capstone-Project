@@ -20,7 +20,8 @@ export default function LoginPage() {
       await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -42,8 +43,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label fw-semibold">Email address</label>
+              <label htmlFor="email" className="form-label fw-semibold">Email address</label>
               <input
+                id="email"
+                name="email"
                 type="email"
                 className="form-control"
                 value={email}
@@ -51,17 +54,21 @@ export default function LoginPage() {
                 required
                 autoFocus
                 placeholder="you@example.com"
+                autoComplete="email"
               />
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold">Password</label>
+              <label htmlFor="password" className="form-label fw-semibold">Password</label>
               <input
+                id="password"
+                name="password"
                 type="password"
                 className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
             </div>
             <button
