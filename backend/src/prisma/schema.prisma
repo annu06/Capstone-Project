@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  Admin
+  Shipper
+  Consignee
+  Freight_Forwarder
+  Shipping_Line
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String
+  fullName            String
+  role                UserRole
+  isActive            Boolean   @default(true)
+  failedLoginAttempts Int       @default(0)
+  lockoutEndTime      DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  couriers            Courier[]             @relation("ShipperCouriers")
+  transactions        Transaction[]
+  notifications       Notification[]
+  auditTrailEntries   AuditTrailEntry[]
+  courierParticipants CourierParticipant[]
+
+  @@map("users")
+}
+
+model Courier {
+  id                String   @id @default(uuid())
+  trackingId        String   @unique
+  shipperId         String
+  shipper           User     @relation("ShipperCouriers", fields: [shipperId], references: [id])
+  senderName        String
+  receiverName      String
+  productDimensions String
+  productSize       String
+  productWeight     Decimal  @db.Decimal(10, 2)
+  productQuality    String
+  status            String   @default("Pending")
+  isCancelled       Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  version           Int      @default(0)
+
+  transactions      Transaction[]
+  ledgerEntries     BlockchainLedgerEntry[]
+  auditTrailEntries AuditTrailEntry[]
+  participants      CourierParticipant[]
+
+  @@map("couriers")
+}
+
+model Transaction {
+  id                String   @id @default(uuid())
+  courierId         String
+  courier           Courier  @relation(fields: [courierId], references: [id])
+  trackingId        String
+  submittedById     String
+  submittedBy       User     @relation(fields: [submittedById], references: [id])
+  senderLocation    String
+  receiverLocation  String
+  productDimensions String
+  productSize       String
+  productQuality    String
+  status            String
+  timestamp         DateTime @default(now())
+  sequenceNumber    Int
+  createdAt         DateTime @default(now())
+
+  ledgerEntry BlockchainLedgerEntry?
+
+  @@unique([trackingId, sequenceNumber])
+  @@index([trackingId])
+  @@map("transactions")
+}
+
+model BlockchainLedgerEntry {
+  id             String      @id @default(uuid())
+  transactionId  String      @unique
+  transaction    Transaction @relation(fields: [transactionId], references: [id])
+  courierId      String
+  courier        Courier     @relation(fields: [courierId], references: [id])
+  trackingId     String
+  hash           String
+  previousHash   String
+  sequenceNumber Int
+  createdAt      DateTime    @default(now())
+
+  @@index([trackingId])
+  @@map("blockchain_ledger")
+}
+
+model AuditTrailEntry {
+  id         String   @id @default(uuid())
+  actionType String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  courierId  String?
+  courier    Courier? @relation(fields: [courierId], references: [id])
+  trackingId String?
+  timestamp  DateTime @default(now())
+  details    String
+
+  @@index([trackingId])
+  @@index([timestamp])
+  @@map("audit_trail")
+}
+
+model Notification {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  trackingId       String?
+  message          String
+  notificationType String
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model CourierParticipant {
+  id              String  @id @default(uuid())
+  courierId       String
+  courier         Courier @relation(fields: [courierId], references: [id])
+  userId          String
+  user            User    @relation(fields: [userId], references: [id])
+  participantRole String
+
+  @@unique([courierId, userId])
+  @@map("courier_participants")
+}

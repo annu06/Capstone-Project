@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar-width: 260px;
+}
+
+body {
+  background-color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%);
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .sidebar { width: 100%; min-height: auto; }
+  .main-content { margin-left: 0; }
+}
+
+.card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  border-radius: 0.75rem;
+}
+
+.badge-integrity-ok   { background-color: #10b981; }
+.badge-integrity-fail { background-color: #ef4444; }
+
+.chain-link-icon {
+  font-size: 1.5rem;
+  color: #2563eb;
+}
+
+.hash-chain-entry {
+  border-left: 3px solid #3b82f6;
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.tampered-row { background-color: #fee2e2 !important; }
